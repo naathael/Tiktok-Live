@@ -8,7 +8,7 @@ Tiktok-live is a program for easily creating interactive live sessions by engagi
 
 Install the modules using PIP with the following command:
 ```bash
-pip install pyautogui TiktokLive colorama logging
+pip install pyautogui TiktokLive colorama logging pynput
 ```
 
 ## Usage
