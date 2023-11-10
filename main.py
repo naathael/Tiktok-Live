@@ -8,7 +8,9 @@ import psutil
 import colorama
 import os
 import difflib
+import re
 
+# Initialisation des modules
 pyautogui.FAILSAFE = False
 keyboard = Controller()
 username_color = colorama.Fore.CYAN
@@ -19,11 +21,14 @@ message_color = colorama.Fore.BLUE
 status_online_color = colorama.Fore.GREEN
 status_offline_color = colorama.Fore.RED
 gift_color = colorama.Fore.RED
+money_color = colorama.Fore.YELLOW  # Ajout de la couleur pour le montant d'argent
 start_time = None
 message_count = 0
 spectator_count = 0
 online_status = False
 last_gift = None
+cumulated_gift_count = 0
+
 
 
 def connect_to_tiktok(client, account):
@@ -50,6 +55,8 @@ def print_interface(account):
 
         status_info = f"Status : {colored_fade('En ligne', status_online_color)}"
         gift_info = f"Cadeau : {colored_fade(last_gift, gift_color) if last_gift else 'Aucun'}"
+        cumulated_gift_info = f"Cumulation cadeau : {colored_fade(cumulated_gift_count, gift_color)}"
+        
 
         print("---------------------------")
         print(colored_fade(username_info, username_color))
@@ -59,6 +66,7 @@ def print_interface(account):
         print(f"{message_color}{message_info}{colorama.Fore.RESET}")
         print(status_info)
         print(gift_info)
+        print(cumulated_gift_info)
         print("---------------------------")
     else:
         print(colored_fade(account, username_color))
@@ -76,8 +84,9 @@ def format_time(seconds):
 
 
 actions = {
+
     'example1': lambda: example1('', duration=0.1),
-    'exeample2': lambda: example2(''),
+    'example2': lambda: example2(''),
 
 }
 
@@ -105,12 +114,6 @@ def example2(key):
         logging.error(f"Touche non reconnue : {e}")
 
 
-
-
-def construction(key, duration):
-    keyboard.press(key)
-    time.sleep(duration)
-    keyboard.release(key)
 
 def is_typo(word1, word2):
     return sum(a != b for a, b in zip(word1, word2)) <= 1
@@ -155,10 +158,18 @@ async def on_viewer_update(event: ViewerUpdateEvent):
 
 @client.on("gift")
 async def on_gift(event: GiftEvent):
-    global last_gift
+    global last_gift, total_money_earned, cumulated_gift_count
     last_gift = event.gift.info.name if event.gift and event.gift.info else None
+
+    # Utilise une expression régulière pour extraire le nombre du champ description
+    count_match = re.search(r'count=(\d+)', event.gift.info.description)
+    count = int(count_match.group(1)) if count_match else 0
+
+    # Ajoute le nombre de cadeaux à la cumulation
+    cumulated_gift_count += count
     print_interface(account)
 
 while not online_status:
     connect_to_tiktok(client, account)
     print_interface(account)
+
