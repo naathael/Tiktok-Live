@@ -10,7 +10,7 @@ import os
 import difflib
 import re
 
-# Initialisation des modules
+
 pyautogui.FAILSAFE = False
 keyboard = Controller()
 username_color = colorama.Fore.CYAN
@@ -21,15 +21,13 @@ message_color = colorama.Fore.BLUE
 status_online_color = colorama.Fore.GREEN
 status_offline_color = colorama.Fore.RED
 gift_color = colorama.Fore.RED
-money_color = colorama.Fore.YELLOW  # Ajout de la couleur pour le montant d'argent
+money_color = colorama.Fore.YELLOW  
 start_time = None
 message_count = 0
 spectator_count = 0
 online_status = False
 last_gift = None
 cumulated_gift_count = 0
-
-
 
 def connect_to_tiktok(client, account):
     global online_status
@@ -57,7 +55,6 @@ def print_interface(account):
         gift_info = f"Cadeau : {colored_fade(last_gift, gift_color) if last_gift else 'Aucun'}"
         cumulated_gift_info = f"Cumulation cadeau : {colored_fade(cumulated_gift_count, gift_color)}"
         
-
         print("---------------------------")
         print(colored_fade(username_info, username_color))
         print(f"{ram_color}{ram_info}{colorama.Fore.RESET}")
@@ -76,27 +73,37 @@ def print_interface(account):
 def colored_fade(text, color):
     return f"{color}{text}{colorama.Fore.RESET}"
 
-
 def format_time(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return f"{int(hours)}:{int(minutes)}:{int(seconds)}"
 
+def press_key(key, duration):
+    try:
+        keyboard.press(key)
+        time.sleep(duration)
+        keyboard.release(key)
+    except ValueError as e:
+        logging.error(f"Touche non reconnue : {e}")
 
 actions = {
+    'example1': lambda: press_key('z', duration=0.1),
+    'example2': lambda: press_key('z'),
+}
 
-    'example1': lambda: example1('', duration=0.1),
-    'example2': lambda: example2(''),
+
+gift_actions = {
+    'rose': lambda: press_key('z', duration=10),
 
 }
 
-keys = list(actions.keys())
+keys = list(actions.keys()) + list(gift_actions.keys())
 
 def is_typo(word1, word2):
     return sum(a != b for a, b in zip(word1, word2)) <= 1
 
 def find_closest_action(misspelled_key):
-    return difflib.get_close_matches(misspelled_key, keys, n=1, cutoff=0.8)
+    return next((key for key in keys if is_typo(misspelled_key, key)), None)
 
 def example1(key, duration):
     try:
@@ -112,14 +119,6 @@ def example2(key):
         keyboard.release(key)
     except ValueError as e:
         logging.error(f"Touche non reconnue : {e}")
-
-
-
-def is_typo(word1, word2):
-    return sum(a != b for a, b in zip(word1, word2)) <= 1
-
-def find_closest_action(misspelled_key):
-    return next((key for key in keys if is_typo(misspelled_key, key)), None)
 
 account = input("Entrez votre pseudo TikTok : ")
 
@@ -158,8 +157,9 @@ async def on_viewer_update(event: ViewerUpdateEvent):
 
 @client.on("gift")
 async def on_gift(event: GiftEvent):
-    global last_gift, total_money_earned, cumulated_gift_count
-    last_gift = event.gift.info.name if event.gift and event.gift.info else None
+    global last_gift, cumulated_gift_count
+
+    last_gift = event.gift.info.name.lower() if event.gift and event.gift.info else None
 
     # Utilise une expression régulière pour extraire le nombre du champ description
     count_match = re.search(r'count=(\d+)', event.gift.info.description)
@@ -167,9 +167,13 @@ async def on_gift(event: GiftEvent):
 
     # Ajoute le nombre de cadeaux à la cumulation
     cumulated_gift_count += count
+
+    # Vérifie si le cadeau a une action associée
+    if last_gift in gift_actions:
+        gift_actions[last_gift]()
+
     print_interface(account)
 
 while not online_status:
     connect_to_tiktok(client, account)
     print_interface(account)
-
