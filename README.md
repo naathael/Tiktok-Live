@@ -2,7 +2,7 @@
 
 Tiktok-live is a program for easily creating interactive live sessions by engaging with your virtual keyboard.
 
-⚠️Investigation underway regarding certain error messages. Code is functional but may currently contain multiple bugs.
+⚠️ Investigation underway regarding certain error messages. The find_closest_action function will be available again in the next commit. Code is functional but may currently contain multiple bugs.
 
 ## Installation
 
